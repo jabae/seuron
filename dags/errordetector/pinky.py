@@ -1,8 +1,13 @@
+"""
+DAG for pinky error detection
+"""
+
+# Import necessary packages
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.docker_plugin import DockerWithVariablesOperator
 
-from .. import utils 
+from utils import * 
 
 DAG_ID = 'basil_bench'
 
@@ -36,7 +41,7 @@ patch_shape = (320, 320, 33)
 chunk_shape = (256, 256, 256)
 padded_chunk_shape = tuple([patch_shape[i]+chunk_shape[i] for i in range(3)])
 
-proc_dir_path = "gs://seunglab/alex/pinky"
+out_dir = "gs://seunglab/alex/pinky"
 # =============
 
 
@@ -51,7 +56,7 @@ def chunk_errdet(dag, chunk_begin, chunk_end):
         host_args={"runtime": "nvidia"}
         mount_point="/root/.cloudvolume/secrets",
         task_id="chunk_errdet_" + "_".join(map(str, chunk_begin)),
-        command(f"chunk_errdet {img_cvname} {seg_cvname} {proc_dir_path}"
+        command(f"chunk_errdet {img_cvname} {seg_cvname} {out_dir}"
                 f" --chunk_begin {chunk_begin_str}"
                 f" --chunk_end {chunk_end_str}"),
         default_args=default_args,
