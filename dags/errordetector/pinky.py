@@ -33,10 +33,13 @@ img_cvname = "gs://neuroglancer/"
 seg_cvname = "gs://neuroglancer/"
 out_cvname = "gs://neuroglancer/"
 
+model_dir = "/usr/people/jabae/seungmount/research/Alex/errordetection/exp/reconstruction_norm_lr_0001/exp_reconstruction_norm_augment_error2_320_1031/model/"
+chkpt_num = 183000
 
 # VOLUME COORDS (in mip0)
 vol_shape   = (2048, 2048, 256)
 patch_shape = (320, 320, 33)
+out_shape = (20, 20, 33)
 
 chunk_shape = (256, 256, 256)
 padded_chunk_shape = tuple([patch_shape[i]+chunk_shape[i] for i in range(3)])
@@ -56,9 +59,13 @@ def chunk_errdet(dag, chunk_begin, chunk_end):
         host_args={"runtime": "nvidia"}
         mount_point="/root/.cloudvolume/secrets",
         task_id="chunk_errdet_" + "_".join(map(str, chunk_begin)),
-        command(f"chunk_errdet {img_cvname} {seg_cvname} {out_dir}"
+        command(f"chunk_errdet {seg_cvname} {img_cvname} {out_cvname}"
                 f" --chunk_begin {chunk_begin_str}"
-                f" --chunk_end {chunk_end_str}"),
+                f" --chunk_end {chunk_end_str}"
+                f" --model_dir {model_dir}"
+                f" --chkpt_num {chkpt_num}"
+                f" --patch_shape {patch_shape}"
+                f" --out_shape {out_shape}"),
         default_args=default_args,
         image="seunglab/errordetector:latest",
         queue="gpu",
@@ -66,19 +73,19 @@ def chunk_errdet(dag, chunk_begin, chunk_end):
         )
 
 
-# Merge error maps of chunks
-def merge_errdet(dag):
+# # Merge error maps of chunks
+# def merge_errdet(dag):
 
-    return DockerWithVariablesOperator(
-        ["google-secret.json"],
-        mount_point="/root/.cloudvolume/secrets",
-        task_id="merge_errdet",
-        command=(f"merge_errdet {proc_dir_path}"),
-        default_args=default_args,
-        image="seunglab/errordetector:latest",
-        queue="cpu",
-        dag=dag
-        )
+#     return DockerWithVariablesOperator(
+#         ["google-secret.json"],
+#         mount_point="/root/.cloudvolume/secrets",
+#         task_id="merge_errdet",
+#         command=(f"merge_errdet {proc_dir_path}"),
+#         default_args=default_args,
+#         image="seunglab/errordetector:latest",
+#         queue="cpu",
+#         dag=dag
+#         )
 
 
 ### Pipeline
@@ -87,6 +94,3 @@ bboxes = chunk_bboxes(vol_shape, padded_chunk_shape, patch_shape)
 
 # STEP 1: chunk_errdet
 step1 = [chunk_errdet(dag, bb[0], bb[1]) for bb in bboxes]
-
-# STEP 2: merge_errdet
-step2 = merge_errdet(dag)
