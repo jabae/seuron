@@ -73,21 +73,6 @@ def chunk_errdet(dag, chunk_begin, chunk_end):
         )
 
 
-# # Merge error maps of chunks
-# def merge_errdet(dag):
-
-#     return DockerWithVariablesOperator(
-#         ["google-secret.json"],
-#         mount_point="/root/.cloudvolume/secrets",
-#         task_id="merge_errdet",
-#         command=(f"merge_errdet {proc_dir_path}"),
-#         default_args=default_args,
-#         image="seunglab/errordetector:latest",
-#         queue="cpu",
-#         dag=dag
-#         )
-
-
 ### Pipeline
 # Chunk volume
 bboxes = chunk_bboxes(vol_shape, padded_chunk_shape, patch_shape)
