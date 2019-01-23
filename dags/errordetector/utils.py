@@ -21,6 +21,10 @@ def chunk_bboxes_overlap(vol_size, chunk_size, overlap=(0, 0, 0), offset=None, m
                       chunk_size[1]//mip_factor,
                       chunk_size[2])
 
+        overlap = (overlap[0]//mip_factor,
+                   overlap[1]//mip_factor,
+                   overlap[2])
+
         if offset is not None:
             offset = (offset[0]//mip_factor,
                       offset[1]//mip_factor,

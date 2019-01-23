@@ -29,9 +29,9 @@ dag = DAG(
 
 # =============
 # run-specific args
-img_cvname = "gs://neuroglancer/"
-seg_cvname = "gs://neuroglancer/"
-out_cvname = "gs://neuroglancer/"
+img_cvname = "gs://neuroglancer/pinky100_v0/son_of_alignment_v15_rechunked"
+seg_cvname = "gs://neuroglancer/pinky100_v0/seg/lost_no-random/bbox1_0"
+out_cvname = "gs://neuroglancer/pinky100_v0/errormap_v0"
 
 
 model_dir = "/usr/people/jabae/seungmount/research/Alex/errordetection/exp/"
@@ -40,22 +40,41 @@ model = model_name + "model/"
 chkpt_num = 183000
 
 # VOLUME COORDS (in mip0)
-vol_shape = (2048, 2048, 256)
+vol_shape = (85926, 51070, 2136)
+offset = (36192, 30558, 21)
+
 patch_shape = (320, 320, 33)
 out_shape = (20, 20, 33)
 
-chunk_shape = (256, 256, 256)
-padded_chunk_shape = tuple([patch_shape[i]+chunk_shape[i] for i in range(3)])
+chunk_shape = (1024, 1024, 128)
+padded_chunk_shape = tuple([patch_shape[i]+2*(chunk_shape[i]//2) for i in range(3)])
 
-out_dir = "gs://seunglab/alex/pinky"
+mip = 1
+
 # =============
+
+# Create errormap
+def create_errormap(dag):
+
+    return DockerWithVariablesOperator(
+        ["google-secret.json"],
+        mount_point="/root/.cloudvolume/secrets",
+        task_id="create_errormap",
+        command=("create_errormap {out_cvname}").format(out_cvname=out_cvname),
+        default_args=default_args,
+        image="seunglab/errordetector:latest",
+        queue="cpu",
+        dag=dag
+        )
 
 
 # Error detection on chunk
-def chunk_errdet(dag, chunk_begin, chunk_end):
+def chunk_errdet(dag, chunk_begin_seg, chunk_end_seg, chunk_begin_img, chunk_end_img):
 
-    chunk_begin_str = tup2str(chunk_begin)
-    chunk_end_str = tup2str(chunk_end)
+    chunk_begin_seg_str = tup2str(chunk_begin_seg)
+    chunk_end_seg_str = tup2str(chunk_end_seg)
+    chunk_begin_img_str = tup2str(chunk_begin_img)
+    chunk_end_img_str = tup2str(chunk_end_img)
 
     return DockerWithVariablesOperator(
         ["google-secret.json"],
@@ -63,14 +82,17 @@ def chunk_errdet(dag, chunk_begin, chunk_end):
         mount_point="/root/.cloudvolume/secrets",
         task_id="chunk_errdet_" + "_".join(map(str, chunk_begin)),
         command=("chunk_errdet {seg_cvname} {img_cvname} {out_cvname}" +
-                    " --chunk_begin {chunk_begin_str}" +
-                    " --chunk_end {chunk_end_str}" +
+                    " --chunk_begin_seg {chunk_begin_seg_str}" +
+                    " --chunk_end_seg {chunk_end_seg_str}" +
+                    " --chunk_begin_img {chunk_begin_img_str}" +
+                    " --chunk_end_img {chunk_end_img_str}"
                     " --model {model}" +
                     " --chkpt_num {chkpt_num}" +
                     " --patch_shape {patch_shape}" +
                     " --out_shape {out_shape}"
                  ).format(seg_cvname=seg_cvname, img_cvname=img_cvname, out_cvname=out_cvname,
-                          chunk_begin_str=chunk_begin_str, chunk_end_str=chunk_end_str,
+                          chunk_begin_seg_str=chunk_begin_seg_str, chunk_end_seg_str=chunk_end_seg_str,
+                          chunk_begin_img_str=chunk_begin_img_str, chunk_end_img_str=chunk_end_img_str,
                           model=model, chkpt_num=chkpt_num,
                           patch_shape=patch_shape, out_shape=out_shape),
         default_args=default_args,
@@ -82,7 +104,11 @@ def chunk_errdet(dag, chunk_begin, chunk_end):
 
 # Pipeline
 # Chunk volume
-bboxes = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape)
+bboxes_seg = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=(36192,30558,21), mip=1)
+bboxes_img = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=(35000,31000,1), mip=1)
 
-# STEP 1: chunk_errdet
-step1 = [chunk_errdet(dag, bb[0], bb[1]) for bb in bboxes]
+# STEP 1: Create errormap
+step1 = create_errormap(dag)
+
+# STEP 2: Chunk error detection
+step2 = [chunk_errdet(dag, bb[0], bb[1]) for bb in bboxes]
