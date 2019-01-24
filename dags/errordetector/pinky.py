@@ -41,13 +41,13 @@ chkpt_num = 183000
 
 # VOLUME COORDS (in mip0)
 vol_shape = (85926, 51070, 2136)
-offset = (36192, 30558, 21)
-
 patch_shape = (320, 320, 33)
 out_shape = (20, 20, 33)
-
 chunk_shape = (1024, 1024, 128)
 padded_chunk_shape = tuple([patch_shape[i]+2*(chunk_shape[i]//2) for i in range(3)])
+
+offset_seg = (36192, 30558, 21)
+offset_img = (35000,31000,1)
 
 mip = 1
 
@@ -60,7 +60,13 @@ def create_errormap(dag):
         ["google-secret.json"],
         mount_point="/root/.cloudvolume/secrets",
         task_id="create_errormap",
-        command=("create_errormap {out_cvname}").format(out_cvname=out_cvname),
+        command=("create_errormap {out_cvname}" +
+                    " --mip {mip}" +
+                    " --vol_shape {vol_shape}" +
+                    " --chunk_shape {chunk_shape}" +
+                    " --offset {offset}"
+                 ).format(out_cvname=out_cvname, mip=mip, vol_shape=vol_shape, 
+                          chunk_shape=chunk_shape, offset=offset_seg),
         default_args=default_args,
         image="seunglab/errordetector:latest",
         queue="cpu",
@@ -104,8 +110,8 @@ def chunk_errdet(dag, chunk_begin_seg, chunk_end_seg, chunk_begin_img, chunk_end
 
 # Pipeline
 # Chunk volume
-bboxes_seg = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=(36192,30558,21), mip=1)
-bboxes_img = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=(35000,31000,1), mip=1)
+bboxes_seg = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=offset_seg, mip=1)
+bboxes_img = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=offset_img, mip=1)
 
 # STEP 1: Create errormap
 step1 = create_errormap(dag)
