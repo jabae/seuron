@@ -63,8 +63,8 @@ def create_errormap(dag):
         command=("create_errormap {out_cvname}" +
                     " --mip {mip}" +
                     " --vol_shape {vol_shape}" +
-                    " --chunk_shape {chunk_shape}" +
-                    " --offset {offset}"
+                    " --patch_shape {patch_shape}" +
+                    " --chunk_shape {chunk_shape}"
                  ).format(out_cvname=out_cvname, mip=mip, vol_shape=vol_shape, 
                           chunk_shape=chunk_shape, offset=offset_seg),
         default_args=default_args,
