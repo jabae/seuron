@@ -53,9 +53,9 @@ mip = 1
 
 # =============
 
+
 # Create errormap
 def create_errormap(dag):
-
 
     return DockerWithVariablesOperator(
         ["google-secret.json"],
@@ -87,7 +87,7 @@ def chunk_errdet(dag, chunk_begin_seg, chunk_end_seg, chunk_begin_img, chunk_end
         ["google-secret.json"],
         host_args={"runtime": "nvidia"},
         mount_point="/root/.cloudvolume/secrets",
-        task_id="chunk_errdet_" + "_".join(map(str, chunk_begin)),
+        task_id="chunk_errdet_" + "_".join(map(str, chunk_begin_seg)),
         command=("chunk_errdet {seg_cvname} {img_cvname} {out_cvname}" +
                     " --chunk_begin_seg {chunk_begin_seg_str}" +
                     " --chunk_end_seg {chunk_end_seg_str}" +
