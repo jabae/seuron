@@ -47,7 +47,7 @@ chunk_shape = (1024, 1024, 128)
 padded_chunk_shape = tuple([patch_shape[i]+2*(chunk_shape[i]//2) for i in range(3)])
 
 offset_seg = (36192, 30558, 21)
-offset_img = (35000,31000,1)
+offset_img = (35000, 31000, 1)
 
 mip = 1
 
@@ -55,6 +55,7 @@ mip = 1
 
 # Create errormap
 def create_errormap(dag):
+
 
     return DockerWithVariablesOperator(
         ["google-secret.json"],
@@ -65,7 +66,7 @@ def create_errormap(dag):
                     " --vol_shape {vol_shape}" +
                     " --patch_shape {patch_shape}" +
                     " --chunk_shape {chunk_shape}"
-                 ).format(out_cvname=out_cvname, mip=mip, vol_shape=vol_shape, 
+                 ).format(out_cvname=out_cvname, mip=mip, vol_shape=vol_shape,
                           chunk_shape=chunk_shape, offset=offset_seg),
         default_args=default_args,
         image="seunglab/errordetector:latest",

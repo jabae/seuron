@@ -50,7 +50,7 @@ def bounds1D_overlap(full_width, step_size, overlap=0):
 
     assert step_size > 0, "invalid step_size: {}".format(step_size)
     assert full_width > 0, "invalid volume_width: {}".format(full_width)
-    assert overlap > 0, "invalid overlap: {}".format(overlap)
+    assert overlap >= 0, "invalid overlap: {}".format(overlap)
 
     start = 0
     end = step_size
