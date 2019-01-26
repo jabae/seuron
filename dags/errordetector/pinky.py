@@ -113,9 +113,10 @@ def chunk_errdet(dag, chunk_begin_seg, chunk_end_seg, chunk_begin_img, chunk_end
 # Chunk volume
 bboxes_seg = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=offset_seg, mip=1)
 bboxes_img = chunk_bboxes_overlap(vol_shape, padded_chunk_shape, patch_shape, offset=offset_img, mip=1)
+bboxes = [bboxes_seg[i]+bboxes_img[i] for i in range(len(bboxes_seg))]
 
 # STEP 1: Create errormap
 step1 = create_errormap(dag)
 
 # STEP 2: Chunk error detection
-step2 = [chunk_errdet(dag, bb[0], bb[1]) for bb in bboxes]
+step2 = [chunk_errdet(dag, bb[0], bb[1], bb[2], bb[3]) for bb in bboxes]
