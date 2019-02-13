@@ -40,14 +40,14 @@ model = model_name + "model/"
 chkpt_num = 183000
 
 # VOLUME COORDS (in mip0)
-vol_shape = (85926, 51070, 2136)
+vol_shape = (85926, 51070, 2137)
+chunk_shape = (2048, 2048, 128)
+padded_chunk_shape = tuple([patch_shape[i]+2*(chunk_shape[i]//2) for i in range(3)])
 patch_shape = (320, 320, 33)
 out_shape = (20, 20, 33)
-chunk_shape = (1024, 1024, 128)
-padded_chunk_shape = tuple([patch_shape[i]+2*(chunk_shape[i]//2) for i in range(3)])
 
 offset_seg = (36192, 30558, 21)
-offset_img = (35000, 31000, 1)
+offset_img = (17500, 15500, 1)
 
 mip = 1
 
@@ -64,10 +64,11 @@ def create_errormap(dag):
         command=("create_errormap {out_cvname}" +
                     " --mip {mip}" +
                     " --vol_shape {vol_shape}" +
+                    " --chunk_shape {chunk_shape}" +
                     " --patch_shape {patch_shape}" +
-                    " --chunk_shape {chunk_shape}"
+                    " --offset {offset}"
                  ).format(out_cvname=out_cvname, mip=mip, vol_shape=vol_shape,
-                          chunk_shape=chunk_shape, offset=offset_seg),
+                          chunk_shape=chunk_shape, patch_shape=patch_shape, offset=offset_seg),
         default_args=default_args,
         image="seunglab/errordetector:latest",
         queue="cpu",
